@@ -9,6 +9,9 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputTriggers.h"
+#include "Components/CapsuleComponent.h"
+#include "SpawnableItem.h"
+#include "Components/SphereComponent.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -24,9 +27,19 @@ APlayerCharacter::APlayerCharacter()
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 
+	PickUpCollider = CreateDefaultSubobject<USphereComponent>(TEXT("Collider"));
+	PickUpCollider->SetupAttachment(GetRootComponent());
+	PickUpCollider->bHiddenInGame = false;
+	PickUpCollider->InitSphereRadius(100.f);
+
+	PickUpCollider->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::OnOverlapBegin);
+	PickUpCollider->OnComponentEndOverlap.AddDynamic(this, &APlayerCharacter::OnOverlapEnd);
+
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
+
+	Inventory = TArray<FInventorySlot>();
 
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 
@@ -36,6 +49,7 @@ APlayerCharacter::APlayerCharacter()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
 
 	GetCharacterMovement()->MaxWalkSpeed = 330.f;
 
@@ -50,7 +64,9 @@ void APlayerCharacter::BeginPlay()
 
 		}
 	}
+
 	
+	UE_LOG(LogTemp, Warning, TEXT("BeginPlay"));
 }
 
 // Called every frame
@@ -102,6 +118,24 @@ void APlayerCharacter::Movement()
 	}
 }
 
+void APlayerCharacter::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	UE_LOG(LogTemp, Warning, TEXT("StartOverlap"));
+	if (OtherActor->IsA<ASpawnableItem>())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Nearby"));
+		NearbyItems.Add(Cast<ASpawnableItem>(OtherActor));
+	}
+}
+
+void APlayerCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex)
+{
+	if (OtherActor->IsA<ASpawnableItem>())
+	{
+		NearbyItems.Remove(Cast<ASpawnableItem>(OtherActor));
+	}
+}
+
 // Called to bind functionality to input
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -125,6 +159,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhanceInputCom->BindAction(MouseYInput, ETriggerEvent::Completed, this, &APlayerCharacter::MouseY);
 
 		EnhanceInputCom->BindAction(InventoryInput, ETriggerEvent::Started, this, &APlayerCharacter::ToggleInventory);
+		EnhanceInputCom->BindAction(UseInput, ETriggerEvent::Started, this, &APlayerCharacter::Use);
 		
 	}
 
@@ -140,9 +175,41 @@ void APlayerCharacter::Attack(const FInputActionValue& input)
 	IsAttack = true;
 }
 
+void APlayerCharacter::Use(const FInputActionValue& input)
+{
+	if (NearbyItems.Num() > 0)
+	{
+		Pickup();
+		return;
+	}
+}
+
+void APlayerCharacter::Pickup()
+{
+	AddItem(NearbyItems[0]->Item, NearbyItems[0]->Amount);
+	ASpawnableItem* ItemToDestroy = NearbyItems[0];
+	NearbyItems.RemoveAt(0);
+	ItemToDestroy->Kill();
+
+}
+
 void APlayerCharacter::ResetAttack()
 {
 	IsAttack = false;
+}
+
+void APlayerCharacter::AddItem(UItem* item, uint8 amount)
+{
+	for (int i{}; i < Inventory.Num(); i++)
+	{
+		if (Inventory[i].Item == item)
+		{
+			Inventory[i].Amount += amount;
+			return;
+		}
+	}
+
+	Inventory.Add(FInventorySlot(item, amount));
 }
 
 void APlayerCharacter::Forward(const FInputActionValue& input)
