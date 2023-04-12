@@ -42,6 +42,9 @@ APlayerCharacter::APlayerCharacter()
 
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 
+	Level = 1;
+	ExperiencePoints = 0.0f;
+
 }
 
 // Called when the game starts or when spawned
@@ -104,14 +107,18 @@ void APlayerCharacter::Movement()
 	ForwardVector *= InputX;
 	RightVector *= InputY;
 
-	if (!FMath::IsNearlyZero(InputX))
+	if (!IsAttack)
 	{
-		AddMovementInput(ForwardVector);
+		if (!FMath::IsNearlyZero(InputX))
+		{
+			AddMovementInput(ForwardVector);
+		}
+		if (!FMath::IsNearlyZero(InputY))
+		{
+			AddMovementInput(RightVector);
+		}
 	}
-	if (!FMath::IsNearlyZero(InputY))
-	{
-		AddMovementInput(RightVector);
-	}
+
 }
 
 // Called to bind functionality to input
@@ -137,6 +144,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhanceInputCom->BindAction(MouseYInput, ETriggerEvent::Completed, this, &APlayerCharacter::MouseY);
 
 		EnhanceInputCom->BindAction(InventoryInput, ETriggerEvent::Started, this, &APlayerCharacter::ToggleInventory);
+		EnhanceInputCom->BindAction(SettingsInput, ETriggerEvent::Started, this, &APlayerCharacter::ToggleSettings);
+		EnhanceInputCom->BindAction(GiveXPInput, ETriggerEvent::Started, this, &APlayerCharacter::GiveXP);
 		EnhanceInputCom->BindAction(UseInput, ETriggerEvent::Started, this, &APlayerCharacter::Use);
 		
 	}
@@ -162,6 +171,11 @@ void APlayerCharacter::Use(const FInputActionValue& input)
 	}
 
 	
+}
+
+void APlayerCharacter::GiveXP(const FInputActionValue& input)
+{
+	GiveExperience(50);
 }
 
 void APlayerCharacter::PickUp()
@@ -229,6 +243,24 @@ void APlayerCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AA
 	{
 		NearbyItems.Remove(Cast<ASpawnableItem>(OtherActor));
 	}
+}
+
+void APlayerCharacter::GiveExperience(float xp)
+{
+	// Add XP
+	ExperiencePoints += xp;
+
+	// If were max level dont do anything else
+	if (ExperienceForLevel.Num() <= Level - 1) return;
+
+	// This means we level up
+	if (ExperienceForLevel[Level - 1] < ExperiencePoints)
+	{
+		ExperiencePoints -= ExperienceForLevel[Level - 1];
+		if (Level + 1 <= ExperienceForLevel.Num())
+			Level++;
+	}
+
 }
 
 

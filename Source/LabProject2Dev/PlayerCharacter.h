@@ -88,6 +88,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InputSystem)
 	class UInputAction* UseInput;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InputSystem)
+	class UInputAction* GiveXPInput;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InputSystem)
+	class UInputAction* SettingsInput;
+
 	UFUNCTION()
 	bool GetIsAttack();
 
@@ -97,6 +103,8 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void ToggleInventory();
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void ToggleSettings();
 
 	UFUNCTION()
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -107,6 +115,10 @@ public:
 	void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 			UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex);
 
+	UFUNCTION()
+	void GiveExperience(float xp);
+
+
 private:
 	void Forward(const FInputActionValue& input);
 	void Right(const FInputActionValue& input);
@@ -114,6 +126,7 @@ private:
 	void MouseY(const FInputActionValue& input);
 	void Attack(const FInputActionValue& input);
 	void Use(const FInputActionValue& input);
+	void GiveXP(const FInputActionValue& input);
 
 	void PickUp();
 	void AddItem(UItem* item, uint8 amount);
@@ -127,6 +140,15 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerVariables | Animation")
 	float InputY;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PlayerVariables | Stats")
+	float ExperiencePoints;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PlayerVariables | Stats")
+	TArray<float> ExperienceForLevel;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PlayerVariables | Stats")
+	int Level;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	TArray<FInventorySlot> Inventory;
 
@@ -139,5 +161,7 @@ private:
 
 	float Yaw;
 	float Pitch;
+
+
 
 };
