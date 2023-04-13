@@ -88,6 +88,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InputSystem)
 	class UInputAction* UseInput;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InputSystem)
+	class UInputAction* SettingsInput;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InputSystem)
+	class UInputAction* GiveXPInput;
+
 	UFUNCTION()
 	bool GetIsAttack();
 
@@ -96,6 +102,9 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void ToggleInventory();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void ToggleSettings();
 
 
 	UFUNCTION()
@@ -114,9 +123,11 @@ private:
 	void MouseY(const FInputActionValue& input);
 	void Attack(const FInputActionValue& input);
 	void Use(const FInputActionValue& input);
+	void GiveXpByInput(const FInputActionValue& input);
 
 	void PickUp();
 	void AddItem(UItem* item, uint8 amount);
+	void GiveExperience(float xp);
 
 	void Movement();
 
@@ -126,6 +137,12 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerVariables | Animation")
 	float InputY;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerVariables | Stats")
+	int Level;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerVariables | Stats")
+	float Experience;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	TArray<FInventorySlot> Inventory;

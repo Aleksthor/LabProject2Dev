@@ -104,11 +104,11 @@ void APlayerCharacter::Movement()
 	ForwardVector *= InputX;
 	RightVector *= InputY;
 
-	if (!FMath::IsNearlyZero(InputX))
+	if (!FMath::IsNearlyZero(InputX) && !IsAttack)
 	{
 		AddMovementInput(ForwardVector);
 	}
-	if (!FMath::IsNearlyZero(InputY))
+	if (!FMath::IsNearlyZero(InputY) && !IsAttack)
 	{
 		AddMovementInput(RightVector);
 	}
@@ -137,7 +137,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhanceInputCom->BindAction(MouseYInput, ETriggerEvent::Completed, this, &APlayerCharacter::MouseY);
 
 		EnhanceInputCom->BindAction(InventoryInput, ETriggerEvent::Started, this, &APlayerCharacter::ToggleInventory);
+		EnhanceInputCom->BindAction(SettingsInput, ETriggerEvent::Started, this, &APlayerCharacter::ToggleSettings);
 		EnhanceInputCom->BindAction(UseInput, ETriggerEvent::Started, this, &APlayerCharacter::Use);
+		EnhanceInputCom->BindAction(GiveXPInput, ETriggerEvent::Started, this, &APlayerCharacter::GiveXpByInput);
 		
 	}
 
@@ -162,6 +164,11 @@ void APlayerCharacter::Use(const FInputActionValue& input)
 	}
 
 	
+}
+
+void APlayerCharacter::GiveXpByInput(const FInputActionValue& input)
+{
+	GiveExperience(33);
 }
 
 void APlayerCharacter::PickUp()
@@ -213,6 +220,18 @@ void APlayerCharacter::MouseX(const FInputActionValue& input)
 void APlayerCharacter::MouseY(const FInputActionValue& input)
 {
 	Pitch = input.Get<float>();
+}
+
+
+void APlayerCharacter::GiveExperience(float xp)
+{
+	Experience += xp;
+
+	if (Experience >= 100)
+	{
+		Experience -= 100;
+		Level++;
+	}
 }
 
 void APlayerCharacter::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
